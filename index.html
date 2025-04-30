@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Точечное изменение цвета при прокрутке</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .block {
+            border: 3px solid;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 200px 0;
+            position: relative;
+            background: white;
+            border-color: #4285f4; /* Начальный цвет - синий */
+        }
+        
+        .connector-line {
+            position: absolute;
+            left: 50%;
+            width: 4px;
+            background: #4285f4; /* Начальный цвет - синий */
+            z-index: -1;
+            transform: translateX(-50%);
+        }
+        
+        h2 {
+            margin-top: 0;
+        }
+        
+        .spacer {
+            height: 1500px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="block" id="block1">
+            <h2>Первый блок</h2>
+            <p>Цвет изменится на зелёный только в точке пересечения с серединой экрана.</p>
+        </div>
+        
+        <div class="connector-line" id="connector"></div>
+        
+        <div class="block" id="block2">
+            <h2>Второй блок</h2>
+            <p>Цвет изменится на зелёный только в точке пересечения с серединой экрана.</p>
+        </div>
+        
+        <div class="spacer"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const block1 = document.getElementById('block1');
+            const block2 = document.getElementById('block2');
+            const connector = document.getElementById('connector');
+            
+            // Цвета
+            const COLOR_ABOVE = '#4285f4'; // Синий
+            const COLOR_BELOW = '#34a853'; // Зелёный
+            
+            // Устанавливаем положение и высоту соединительной линии
+            function setupConnector() {
+                const rect1 = block1.getBoundingClientRect();
+                const rect2 = block2.getBoundingClientRect();
+                
+                const top = rect1.bottom + window.scrollY;
+                const height = rect2.top - rect1.bottom;
+                
+                connector.style.top = top + 'px';
+                connector.style.height = height + 'px';
+            }
+            
+            // Обновляем цвета элементов
+            function updateColors() {
+                const windowHeight = window.innerHeight;
+                const middleScreen = window.scrollY + (windowHeight / 2);
+                
+                // Обрабатываем каждый элемент
+                processElement(block1, middleScreen);
+                processElement(block2, middleScreen);
+                processConnector(connector, middleScreen);
+            }
+            
+            // Обработка блоков
+            function processElement(element, middleScreen) {
+                const rect = element.getBoundingClientRect();
+                const elementTop = rect.top + window.scrollY;
+                const elementBottom = rect.bottom + window.scrollY;
+                
+                // Градиент для границы
+                const gradientPos = Math.max(0, Math.min(1, 
+                    (middleScreen - elementTop) / (elementBottom - elementTop)
+                ));
+                
+                element.style.borderImage = 
+                    `linear-gradient(to bottom, 
+                     ${COLOR_ABOVE} 0%, 
+                     ${COLOR_ABOVE} ${gradientPos * 100}%, 
+                     ${COLOR_BELOW} ${gradientPos * 100}%, 
+                     ${COLOR_BELOW} 100%) 1`;
+            }
+            
+            // Обработка соединительной линии
+            function processConnector(connector, middleScreen) {
+                const rect = connector.getBoundingClientRect();
+                const connectorTop = rect.top + window.scrollY;
+                const connectorBottom = rect.bottom + window.scrollY;
+                
+                // Позиция смены цвета (0-1)
+                const gradientPos = Math.max(0, Math.min(1, 
+                    (middleScreen - connectorTop) / (connectorBottom - connectorTop)
+                ));
+                
+                connector.style.background = 
+                    `linear-gradient(to bottom, 
+                     ${COLOR_ABOVE} 0%, 
+                     ${COLOR_ABOVE} ${gradientPos * 100}%, 
+                     ${COLOR_BELOW} ${gradientPos * 100}%, 
+                     ${COLOR_BELOW} 100%)`;
+            }
+            
+            // Инициализация
+            setupConnector();
+            updateColors();
+            
+            // Обработчики событий
+            window.addEventListener('scroll', function() {
+                updateColors();
+            });
+            
+            window.addEventListener('resize', function() {
+                setupConnector();
+                updateColors();
+            });
+        });
+    </script>
+</body>
+</html>
